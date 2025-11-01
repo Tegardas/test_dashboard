@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EWS - Landslide Monitoring System</title>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-mountain"></i>
+                <h1>Landslide EWS Dashboard</h1>
+            </div>
+            <div class="connection-status">
+                <span id="connectionStatus" class="status-offline">
+                    <i class="fas fa-wifi"></i> Disconnected
+                </span>
+                <span id="lastUpdate" class="last-update">Never</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-container">
+        <!-- Device Info Panel -->
+        <section class="panel device-info-panel">
+            <h2><i class="fas fa-microchip"></i> Device Information</h2>
+            <div class="device-grid">
+                <div class="info-item">
+                    <label>Device ID</label>
+                    <span id="deviceId">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Location</label>
+                    <span id="deviceLocation">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Firmware</label>
+                    <span id="firmwareVersion">-</span>
+                </div>
+                <div class="info-item">
+                    <label>IP Address</label>
+                    <span id="ipAddress">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Uptime</label>
+                    <span id="deviceUptime">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Risk Level</label>
+                    <span id="riskLevel" class="risk-normal">NORMAL</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Real-time Sensor Data -->
+        <section class="panel sensor-panel">
+            <h2><i class="fas fa-satellite-dish"></i> Real-time Sensor Data</h2>
+            <div class="sensor-grid">
+                <!-- Tilt Sensors -->
+                <div class="sensor-card tilt-card">
+                    <div class="sensor-header">
+                        <i class="fas fa-balance-scale"></i>
+                        <h3>Tilt Sensor</h3>
+                    </div>
+                    <div class="sensor-data">
+                        <div class="data-item">
+                            <label>Roll</label>
+                            <span id="tiltRoll" class="value">0.0°</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Pitch</label>
+                            <span id="tiltPitch" class="value">0.0°</span>
+                        </div>
+                        <div class="gauge-container">
+                            <div class="gauge">
+                                <div class="gauge-fill" id="tiltGauge"></div>
+                            </div>
+                            <div class="gauge-labels">
+                                <span>0°</span>
+                                <span>5°</span>
+                                <span>10°</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Soil Moisture -->
+                <div class="sensor-card soil-card">
+                    <div class="sensor-header">
+                        <i class="fas fa-seedling"></i>
+                        <h3>Soil Moisture</h3>
+                    </div>
+                    <div class="sensor-data">
+                        <div class="data-item large">
+                            <label>Moisture Level</label>
+                            <span id="soilMoisture" class="value">0%</span>
+                        </div>
+                        <div class="moisture-bar">
+                            <div class="bar-fill" id="soilMoistureBar"></div>
+                        </div>
+                        <div class="threshold-markers">
+                            <span class="warning-marker">Warning: 70%</span>
+                            <span class="danger-marker">Danger: 85%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Data -->
+                <div class="sensor-card weather-card">
+                    <div class="sensor-header">
+                        <i class="fas fa-cloud-sun-rain"></i>
+                        <h3>Weather Data</h3>
+                    </div>
+                    <div class="sensor-data">
+                        <div class="data-item">
+                            <label>Temperature</label>
+                            <span id="temperature" class="value">0.0°C</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Humidity</label>
+                            <span id="humidity" class="value">0%</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Rain Today</label>
+                            <span id="dailyRain" class="value">0.0mm</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Rain Last Hour</label>
+                            <span id="hourlyRain" class="value">0.0mm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Soil Displacement -->
+                <div class="sensor-card displacement-card">
+                    <div class="sensor-header">
+                        <i class="fas fa-arrows-alt"></i>
+                        <h3>Soil Displacement</h3>
+                    </div>
+                    <div class="sensor-data">
+                        <div class="data-item">
+                            <label>X Axis</label>
+                            <span id="displacementX" class="value">0.0cm</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Y Axis</label>
+                            <span id="displacementY" class="value">0.0cm</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Z Axis</label>
+                            <span id="displacementZ" class="value">0.0cm</span>
+                        </div>
+                        <div class="data-item total">
+                            <label>Total Displacement</label>
+                            <span id="totalDisplacement" class="value">0.0cm</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="panel charts-panel">
+            <h2><i class="fas fa-chart-line"></i> Historical Data</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h4>Tilt History (Roll & Pitch)</h4>
+                    <canvas id="tiltChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4>Soil Moisture History</h4>
+                    <canvas id="soilChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4>Displacement History</h4>
+                    <canvas id="displacementChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4>Humidity Temperature History</h4>
+                    <canvas id="humtempChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4>Weather History</h4>
+                    <canvas id="rainChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4>Risk Score History</h4>
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Control Panel -->
+        <section class="panel control-panel">
+            <h2><i class="fas fa-sliders-h"></i> Device Control</h2>
+            <div class="control-grid">
+                <div class="control-group">
+                    <h4>Tilt Thresholds</h4>
+                    <div class="input-group">
+                        <label>Warning Threshold (°)</label>
+                        <input type="number" id="tiltWarning" step="0.1" min="0" max="10" value="3.0">
+                    </div>
+                    <div class="input-group">
+                        <label>Danger Threshold (°)</label>
+                        <input type="number" id="tiltDanger" step="0.1" min="0" max="15" value="6.0">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Soil Moisture Thresholds</h4>
+                    <div class="input-group">
+                        <label>Warning Threshold (%)</label>
+                        <input type="number" id="soilWarning" min="0" max="100" value="70">
+                    </div>
+                    <div class="input-group">
+                        <label>Danger Threshold (%)</label>
+                        <input type="number" id="soilDanger" min="0" max="100" value="85">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Displacement Thresholds</h4>
+                    <div class="input-group">
+                        <label>Warning Threshold (cm)</label>
+                        <input type="number" id="displacementWarning" step="0.1" min="0" max="20" value="5.0">
+                    </div>
+                    <div class="input-group">
+                        <label>Danger Threshold (cm)</label>
+                        <input type="number" id="displacementDanger" step="0.1" min="0" max="20" value="10.0">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Other Settings</h4>
+                    <div class="input-group">
+                        <label>Humidity Warning (%)</label>
+                        <input type="number" id="humidityWarning" min="0" max="100" value="85">
+                    </div>
+                    <div class="input-group">
+                        <label>MQTT Interval (ms)</label>
+                        <input type="number" id="mqttInterval" min="5000" max="60000" step="1000" value="10000">
+                    </div>
+                </div>
+            </div>
+            <div class="control-buttons">
+                <button id="updateThresholds" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update Thresholds
+                </button>
+                <button id="requestData" class="btn btn-secondary">
+                    <i class="fas fa-sync"></i> Request Data
+                </button>
+                <button id="resetDisplacement" class="btn btn-warning">
+                    <i class="fas fa-undo"></i> Reset Displacement
+                </button>
+            </div>
+        </section>
+
+        <!-- Data Log Panel -->
+        <section class="panel log-panel">
+            <h2><i class="fas fa-list-alt"></i> Connection Log</h2>
+            <div class="log-controls">
+                <button id="reconnectBtn" class="btn btn-small btn-primary">
+                    <i class="fas fa-sync-alt"></i> Reconnect Now
+                </button>
+                <button id="clearLogs" class="btn btn-small">
+                    <i class="fas fa-trash"></i> Clear Logs
+                </button>
+                <button id="exportLogs" class="btn btn-small">
+                    <i class="fas fa-download"></i> Export Logs
+                </button>
+            </div>
+            <div class="log-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Type</th>
+                            <th>Message</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <!-- Log entries will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Alert Notification</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="alertMessage" class="alert-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="acknowledgeAlert" class="btn btn-primary">Acknowledge</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
