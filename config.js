@@ -5,7 +5,7 @@ const MQTT_CONFIG = {
     username: "rzkink_2554",
     password: "rizkink1234",
     clientId: "ews-dashboard-" + Math.random().toString(16).substr(2, 8),
-    topics: {
+    topics: { 
         sensorData: "rzkink_2554/ews/sensor/data",
         alerts: "rzkink_2554/ews/sensor/alerts",
         control: "rzkink_2554/ews/control",
